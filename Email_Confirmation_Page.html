@@ -85,54 +85,63 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = "https://aayozsyiwnfdmavmlgwg.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheW96c3lpd25mZG1hdm1sZ3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk2NzI0ODAsImV4cCI6MjAyNTI0ODQ4MH0.7nB8ZoqKAYZvxXGgI_5sJ_-nHxKvqxsd_RZvuyNoBtY";
+        // Wait for the Supabase client to be loaded
+        window.addEventListener('load', async () => {
+            const SUPABASE_URL = "https://aayozsyiwnfdmavmlgwg.supabase.co";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheW96c3lpd25mZG1hdm1sZ3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk2NzI0ODAsImV4cCI6MjAyNTI0ODQ4MH0.7nB8ZoqKAYZvxXGgI_5sJ_-nHxKvqxsd_RZvuyNoBtY";
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        const statusContainer = document.getElementById('status-container');
-        const messageEl = document.getElementById('message');
-        const returnBtn = document.getElementById('return-btn');
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
-        const type = params.get('type') || 'signup';
+            // Initialize Supabase client
+            const { createClient } = supabase;
+            const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            const statusContainer = document.getElementById('status-container');
+            const messageEl = document.getElementById('message');
+            const returnBtn = document.getElementById('return-btn');
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const type = params.get('type') || 'signup';
 
-        async function verifyEmail() {
-            if (!token) {
-                showError('Invalid or missing verification token.');
-                return;
-            }
-
-            try {
-                const { data, error } = await supabase.auth.verifyOTP({
-                    token: token,
-                    type: type
-                });
-
-                if (error) {
-                    showError(error.message);
-                } else {
-                    showSuccess();
+            async function verifyEmail() {
+                if (!token) {
+                    showError('Invalid or missing verification token.');
+                    return;
                 }
-            } catch (err) {
-                showError('An unexpected error occurred. Please try again.');
+
+                try {
+                    console.log('Attempting to verify email with token:', token);
+                    const { data, error } = await supabaseClient.auth.verifyOTP({
+                        token: token,
+                        type: 'email'
+                    });
+
+                    console.log('Verification response:', { data, error });
+
+                    if (error) {
+                        showError(error.message);
+                    } else {
+                        showSuccess();
+                    }
+                } catch (err) {
+                    console.error('Verification error:', err);
+                    showError('An unexpected error occurred. Please try again.');
+                }
             }
-        }
 
-        function showSuccess() {
-            statusContainer.className = 'success';
-            messageEl.textContent = 'Your email has been successfully verified!';
-            returnBtn.style.display = 'inline-block';
-        }
+            function showSuccess() {
+                statusContainer.className = 'success';
+                messageEl.textContent = 'Your email has been successfully verified!';
+                returnBtn.style.display = 'inline-block';
+            }
 
-        function showError(message) {
-            statusContainer.className = 'error';
-            messageEl.textContent = message;
-            returnBtn.style.display = 'inline-block';
-        }
+            function showError(message) {
+                statusContainer.className = 'error';
+                messageEl.textContent = message;
+                returnBtn.style.display = 'inline-block';
+            }
 
-        // Start verification when page loads
-        verifyEmail();
+            // Start verification when page is fully loaded
+            verifyEmail();
+        });
     </script>
 </body>
 </html>
