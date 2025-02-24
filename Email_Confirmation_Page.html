@@ -97,11 +97,9 @@
             const messageEl = document.getElementById('message');
             const returnBtn = document.getElementById('return-btn');
             
-            // Get the hash parameters from the URL
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-            const token = hashParams.get('access_token');
-            const refreshToken = hashParams.get('refresh_token');
-            const type = hashParams.get('type');
+            // Get token from query parameters
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
 
             async function verifyEmail() {
                 if (!token) {
@@ -112,15 +110,14 @@
                 try {
                     console.log('Attempting to verify email with token');
                     
-                    // Set the session with the tokens
-                    const { data: { session }, error: sessionError } = await supabaseClient.auth.setSession({
-                        access_token: token,
-                        refresh_token: refreshToken
+                    // Use the token to verify the email
+                    const { error } = await supabaseClient.auth.verifyEmailWithToken({
+                        token: token
                     });
 
-                    if (sessionError) {
-                        console.error('Session error:', sessionError);
-                        showError(sessionError.message);
+                    if (error) {
+                        console.error('Verification error:', error);
+                        showError(error.message);
                         return;
                     }
 
