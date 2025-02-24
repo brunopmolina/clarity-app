@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clarity - Email Confirmed</title>
+    <title>Clarity - Email Confirmation</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -45,75 +45,65 @@
         .button:hover {
             background-color: #0056b3;
         }
-        .checkmark {
-            width: 60px;
-            height: 60px;
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007AFF;
             border-radius: 50%;
-            background-color: #4CAF50;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 2rem;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
         }
-        .checkmark svg {
-            width: 30px;
-            height: 30px;
-            fill: white;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div id="loading">
-            <p>Verifying your email...</p>
+            <h1>Verifying Your Email</h1>
+            <div class="spinner"></div>
+            <p>Please wait while we verify your email address...</p>
         </div>
         <div id="success" style="display: none;">
-            <div class="checkmark">
-                <svg viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                </svg>
-            </div>
-            <h1>Email Confirmed!</h1>
-            <p>Your email has been successfully verified. You can now sign in to your Clarity account.</p>
+            <h1>Email Verified!</h1>
+            <p>Your email has been successfully verified. You can now use the Clarity app.</p>
             <a href="clarity://login-callback" class="button">Open Clarity App</a>
         </div>
         <div id="error" style="display: none;">
             <h1>Verification Failed</h1>
             <p>There was a problem verifying your email. Please try again or contact support.</p>
+            <a href="clarity://login-callback" class="button">Return to App</a>
         </div>
     </div>
     <script>
-        const SUPABASE_URL = 'https://aayozsyiwnfdmavmlgwg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheW96c3lpd25mZG1hdm1sZ3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMzEwODcsImV4cCI6MjA1NTkwNzA4N30.ZBzWSN6edpE7pXtB97zBQhYsH-1OJ00uNp5rV7Go2Rk';
-
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         const type = urlParams.get('type');
-        
-        if (token && type) {
-            fetch(`${SUPABASE_URL}/auth/v1/verify`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                }
-            }).then(response => {
-                document.getElementById('loading').style.display = 'none';
-                if (response.ok) {
-                    document.getElementById('success').style.display = 'block';
-                } else {
+        const redirectTo = urlParams.get('redirect_to');
+
+        // Short delay to show the loading state
+        setTimeout(() => {
+            // Redirect to Supabase verify endpoint
+            const verifyUrl = `https://aayozsyiwnfdmavmlgwg.supabase.co/auth/v1/verify?token=${token}&type=${type}&redirect_to=${redirectTo}`;
+            
+            fetch(verifyUrl)
+                .then(response => {
+                    document.getElementById('loading').style.display = 'none';
+                    if (response.ok) {
+                        document.getElementById('success').style.display = 'block';
+                    } else {
+                        document.getElementById('error').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
                     document.getElementById('error').style.display = 'block';
-                }
-            }).catch(error => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').style.display = 'block';
-                console.error('Error:', error);
-            });
-        } else {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('error').style.display = 'block';
-        }
+                    console.error('Error:', error);
+                });
+        }, 1000);
     </script>
 </body>
 </html>
