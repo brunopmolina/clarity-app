@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clarity - Email Confirmed</title>
+    <title>Clarity - Email Verification</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -49,6 +49,19 @@
         .button:hover {
             background-color: #0056b3;
         }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007AFF;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         .checkmark {
             width: 60px;
             height: 60px;
@@ -64,24 +77,85 @@
             height: 30px;
             fill: white;
         }
+        #loading, #success, #error {
+            display: none;
+        }
+        .visible {
+            display: block !important;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="checkmark">
-            <svg viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-            </svg>
+        <div id="loading" class="visible">
+            <h1>Verifying Your Email</h1>
+            <div class="spinner"></div>
+            <p>Please wait while we verify your email address...</p>
         </div>
-        <h1>Email Verified!</h1>
-        <p>Your email has been successfully verified. You can now use the Clarity app.</p>
-        <a href="clarity://login-callback" class="button">Open Clarity App</a>
+        <div id="success">
+            <div class="checkmark">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+            </div>
+            <h1>Email Verified!</h1>
+            <p>Your email has been successfully verified. You can now use the Clarity app.</p>
+            <a href="clarity://login-callback" class="button">Open Clarity App</a>
+        </div>
+        <div id="error">
+            <h1>Verification Failed</h1>
+            <p>There was a problem verifying your email. Please try again or contact support.</p>
+            <a href="clarity://login-callback" class="button">Return to App</a>
+        </div>
     </div>
     <script>
-        // Auto-redirect to app after 1.5 seconds
-        setTimeout(() => {
-            window.location.href = "clarity://login-callback";
-        }, 1500);
+        const SUPABASE_URL = 'https://aayozsyiwnfdmavmlgwg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheW96c3lpd25mZG1hdm1sZ3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMzEwODcsImV4cCI6MjA1NTkwNzA4N30.ZBzWSN6edpE7pXtB97zBQhYsH-1OJ00uNp5rV7Go2Rk';
+
+        function showSection(id) {
+            ['loading', 'success', 'error'].forEach(section => {
+                document.getElementById(section).classList.remove('visible');
+            });
+            document.getElementById(id).classList.add('visible');
+        }
+
+        async function verifyEmail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const type = urlParams.get('type');
+
+            if (!token || !type) {
+                showSection('error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ token, type })
+                });
+
+                if (response.ok) {
+                    showSection('success');
+                    // Auto redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = 'clarity://login-callback';
+                    }, 2000);
+                } else {
+                    showSection('error');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                showSection('error');
+            }
+        }
+
+        // Start verification when page loads
+        verifyEmail();
     </script>
 </body>
 </html>
