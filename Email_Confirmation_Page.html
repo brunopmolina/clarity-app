@@ -100,6 +100,7 @@
             // Get token from query parameters
             const params = new URLSearchParams(window.location.search);
             const token = params.get('token');
+            const type = params.get('type') || 'signup';
 
             async function verifyEmail() {
                 if (!token) {
@@ -111,9 +112,12 @@
                     console.log('Attempting to verify email with token');
                     
                     // Use the token to verify the email
-                    const { error } = await supabaseClient.auth.verifyEmailWithToken({
-                        token: token
+                    const { data, error } = await supabaseClient.auth.verifyOtp({
+                        token_hash: token,
+                        type: 'email'
                     });
+
+                    console.log('Verification response:', { data, error });
 
                     if (error) {
                         console.error('Verification error:', error);
