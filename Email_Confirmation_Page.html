@@ -85,7 +85,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Wait for the Supabase client to be loaded
         window.addEventListener('load', async () => {
             const SUPABASE_URL = "https://aayozsyiwnfdmavmlgwg.supabase.co";
             const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheW96c3lpd25mZG1hdm1sZ3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk2NzI0ODAsImV4cCI6MjAyNTI0ODQ4MH0.7nB8ZoqKAYZvxXGgI_5sJ_-nHxKvqxsd_RZvuyNoBtY";
@@ -97,9 +96,12 @@
             const statusContainer = document.getElementById('status-container');
             const messageEl = document.getElementById('message');
             const returnBtn = document.getElementById('return-btn');
-            const params = new URLSearchParams(window.location.search);
-            const token = params.get('token');
-            const type = params.get('type') || 'signup';
+            
+            // Get the hash parameters from the URL
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const token = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            const type = hashParams.get('type');
 
             async function verifyEmail() {
                 if (!token) {
@@ -108,19 +110,23 @@
                 }
 
                 try {
-                    console.log('Attempting to verify email with token:', token);
-                    const { data, error } = await supabaseClient.auth.verifyOTP({
-                        token: token,
-                        type: 'email'
+                    console.log('Attempting to verify email with token');
+                    
+                    // Set the session with the tokens
+                    const { data: { session }, error: sessionError } = await supabaseClient.auth.setSession({
+                        access_token: token,
+                        refresh_token: refreshToken
                     });
 
-                    console.log('Verification response:', { data, error });
-
-                    if (error) {
-                        showError(error.message);
-                    } else {
-                        showSuccess();
+                    if (sessionError) {
+                        console.error('Session error:', sessionError);
+                        showError(sessionError.message);
+                        return;
                     }
+
+                    // If we get here, the email was verified successfully
+                    showSuccess();
+                    
                 } catch (err) {
                     console.error('Verification error:', err);
                     showError('An unexpected error occurred. Please try again.');
