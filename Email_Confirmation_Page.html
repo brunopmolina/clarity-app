@@ -49,6 +49,19 @@
         .button:hover {
             background-color: #0056b3;
         }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007AFF;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         .checkmark {
             width: 60px;
             height: 60px;
@@ -79,7 +92,7 @@
             height: 30px;
             fill: white;
         }
-        #success, #error {
+        #loading, #success, #error {
             display: none;
         }
         .visible {
@@ -89,6 +102,11 @@
 </head>
 <body>
     <div class="container">
+        <div id="loading" class="visible">
+            <h1>Verifying Your Email</h1>
+            <div class="spinner"></div>
+            <p>Please wait while we verify your email address...</p>
+        </div>
         <div id="success">
             <div class="checkmark">
                 <svg viewBox="0 0 24 24">
@@ -112,28 +130,31 @@
     </div>
     <script>
         function showSection(id) {
-            document.getElementById('success').style.display = 'none';
-            document.getElementById('error').style.display = 'none';
+            ['loading', 'success', 'error'].forEach(section => {
+                document.getElementById(section).style.display = 'none';
+            });
             document.getElementById(id).style.display = 'block';
         }
 
-        // Check URL parameters for error
+        // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        const error = urlParams.get('error');
-        const errorDescription = urlParams.get('error_description');
+        const token = urlParams.get('token');
+        const type = urlParams.get('type');
+        const redirectTo = urlParams.get('redirect_to');
 
-        if (error) {
-            // Show error message with specific description if available
-            if (errorDescription) {
-                document.getElementById('error-message').textContent = errorDescription;
-            }
-            showSection('error');
-        } else {
+        // Immediately redirect to Supabase verify endpoint
+        if (token && type) {
+            const verifyUrl = `https://aayozsyiwnfdmavmlgwg.supabase.co/auth/v1/verify?token=${token}&type=${type}&redirect_to=https://brunopmolina.github.io/clarity-app/Email_Confirmation_Page.html?verified=true`;
+            window.location.href = verifyUrl;
+        } else if (urlParams.get('verified') === 'true') {
+            // Show success after returning from Supabase verification
             showSection('success');
-            // Auto-redirect to app after 2 seconds only on success
             setTimeout(() => {
                 window.location.href = "clarity://login-callback";
             }, 2000);
+        } else {
+            // Show error if no token or verification failed
+            showSection('error');
         }
     </script>
 </body>
