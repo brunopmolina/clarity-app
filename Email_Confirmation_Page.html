@@ -49,20 +49,37 @@
         .button:hover {
             background-color: #0056b3;
         }
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #007AFF;
+        .checkmark {
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            background-color: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .checkmark svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
         }
-        #loading, #success, #error {
+        .error-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+        }
+        .error-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+        #success, #error {
             display: none;
         }
         .visible {
@@ -72,74 +89,52 @@
 </head>
 <body>
     <div class="container">
-        <div id="loading" class="visible">
-            <h1>Verifying Your Email</h1>
-            <div class="spinner"></div>
-            <p>Please wait while we verify your email address...</p>
-        </div>
         <div id="success">
+            <div class="checkmark">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+            </div>
             <h1>Email Verified!</h1>
             <p>Your email has been successfully verified. You can now use the Clarity app.</p>
             <a href="clarity://login-callback" class="button">Open Clarity App</a>
         </div>
         <div id="error">
+            <div class="error-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </div>
             <h1>Verification Failed</h1>
-            <p>There was a problem verifying your email. Please try again or contact support.</p>
+            <p id="error-message">There was a problem verifying your email. The link may have expired or already been used.</p>
             <a href="clarity://login-callback" class="button">Return to App</a>
         </div>
     </div>
     <script>
-        const SUPABASE_URL = 'https://aayozsyiwnfdmavmlgwg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheW96c3lpd25mZG1hdm1sZ3dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMzEwODcsImV4cCI6MjA1NTkwNzA4N30.ZBzWSN6edpE7pXtB97zBQhYsH-1OJ00uNp5rV7Go2Rk';
-
         function showSection(id) {
-            ['loading', 'success', 'error'].forEach(section => {
-                document.getElementById(section).classList.remove('visible');
-            });
-            document.getElementById(id).classList.add('visible');
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById(id).style.display = 'block';
         }
 
-        async function verifyEmail() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const type = urlParams.get('type');
-            const redirectTo = urlParams.get('redirect_to');
+        // Check URL parameters for error
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
 
-            if (!token || !type) {
-                showSection('error');
-                return;
+        if (error) {
+            // Show error message with specific description if available
+            if (errorDescription) {
+                document.getElementById('error-message').textContent = errorDescription;
             }
-
-            try {
-                // Construct the verification URL with all parameters
-                const verifyUrl = `${SUPABASE_URL}/auth/v1/verify?token=${token}&type=${type}&redirect_to=${redirectTo}`;
-                
-                const response = await fetch(verifyUrl, {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY
-                    }
-                });
-
-                if (response.ok) {
-                    showSection('success');
-                    // Auto redirect after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = redirectTo || 'clarity://login-callback';
-                    }, 2000);
-                } else {
-                    const errorData = await response.text();
-                    console.error('Verification failed:', errorData);
-                    showSection('error');
-                }
-            } catch (error) {
-                console.error('Verification error:', error);
-                showSection('error');
-            }
+            showSection('error');
+        } else {
+            showSection('success');
+            // Auto-redirect to app after 2 seconds only on success
+            setTimeout(() => {
+                window.location.href = "clarity://login-callback";
+            }, 2000);
         }
-
-        // Start verification when page loads
-        verifyEmail();
     </script>
 </body>
 </html>
