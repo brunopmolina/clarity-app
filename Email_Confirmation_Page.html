@@ -32,6 +32,20 @@
             line-height: 1.5;
             margin-bottom: 2rem;
         }
+        .button {
+            display: inline-block;
+            background-color: #007AFF;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #007AFF;
@@ -45,6 +59,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        #fallback {
+            display: none;
+        }
+        #fallback.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -52,6 +72,12 @@
         <h1>Verifying Your Email</h1>
         <div class="spinner"></div>
         <p>Please wait while we verify your email address...</p>
+        <div id="fallback">
+            <p>If you're not automatically redirected:</p>
+            <a id="verifyLink" href="#" class="button">Click here to verify</a>
+            <br>
+            <a href="clarity://login-callback" class="button" style="margin-top: 10px;">Return to App</a>
+        </div>
     </div>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -59,10 +85,18 @@
         const type = urlParams.get('type');
         const redirectTo = urlParams.get('redirect_to');
 
-        // Show loading state briefly, then redirect to Supabase
+        const verifyUrl = `https://aayozsyiwnfdmavmlgwg.supabase.co/auth/v1/verify?token=${token}&type=${type}&redirect_to=${redirectTo}`;
+        
+        // Set the verify link href
+        document.getElementById('verifyLink').href = verifyUrl;
+
+        // Show fallback after 3 seconds
         setTimeout(() => {
-            window.location.href = `https://aayozsyiwnfdmavmlgwg.supabase.co/auth/v1/verify?token=${token}&type=${type}&redirect_to=${redirectTo}`;
-        }, 1500);
+            document.getElementById('fallback').classList.add('visible');
+        }, 3000);
+
+        // Immediate redirect
+        window.location.href = verifyUrl;
     </script>
 </body>
 </html>
